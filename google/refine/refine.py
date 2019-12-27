@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """
 Client library to communicate with a Refine server.
 """
@@ -23,12 +23,13 @@ import json
 import gzip
 import os
 import re
-import StringIO
+try:
+    import io
+except:
+    from io import StringIO, BytesIO
 import time
-import urllib
-import urllib2_file
-import urllib2
-import urlparse
+import requests
+import urllib.request, urllib.parse, urllib.error
 
 from google.refine import facet
 from google.refine import history
@@ -74,29 +75,32 @@ class RefineServer(object):
             else:
                 params['project'] = project_id
         if params:
-            url += '?' + urllib.urlencode(params)
-        req = urllib2.Request(url)
-        if data:
-            req.add_data(data)  # data = urllib.urlencode(data)
-        #req.add_header('Accept-Encoding', 'gzip')
+            url += '?' + urllib.parse.urlencode(params)
+        req = urllib.request.Request(url)
+
         try:
-            response = urllib2.urlopen(req)
-        except urllib2.HTTPError as e:
+            if not data:
+                response = requests.get(url)
+            else:
+                response = requests.post(url, data=data, files=files)
+        except requests.exceptions.HTTPError as e:
             raise Exception('HTTP %d "%s" for %s\n\t%s' % (e.code, e.msg, e.geturl(), data))
-        except urllib2.URLError as e:
-            raise urllib2.URLError(
+        except requests.exceptions.URLRequired as e:
+            raise requests.exceptions.URLRequired(
                 '%s for %s. No Refine server reachable/running; ENV set?' %
                 (e.reason, self.server))
-        if response.info().get('Content-Encoding', None) == 'gzip':
+
+        if response.encoding == 'gzip':
             # Need a seekable filestream for gzip
-            gzip_fp = gzip.GzipFile(fileobj=StringIO.StringIO(response.read()))
+            gzip_fp = gzip.GzipFile(fileobj=io.StringIO(response.read()))
             # XXX Monkey patch response's filehandle. Better way?
             urllib.addbase.__init__(response, gzip_fp)
         return response
 
+
     def urlopen_json(self, *args, **kwargs):
         """Open a Refine URL, optionally POST data, and return parsed JSON."""
-        response = json.loads(self.urlopen(*args, **kwargs).read())
+        response = self.urlopen(*args, **kwargs).json()
         if 'code' in response and response['code'] not in ('ok', 'pending'):
             error_message = ('server ' + response['code'] + ': ' +
                              response.get('message', response.get('stack', response)))
@@ -256,24 +260,23 @@ class Refine:
             'include-file-sources': s(include_file_sources),
         }
 
+        files = None
         if project_url is not None:
             options['url'] = project_url
         elif project_file is not None:
-            options['project-file'] = {
-                'fd': open(project_file),
-                'filename': project_file,
-            }
+            files = {'project-file': open(project_file, 'r')}
+
         if project_name is None:
             # make a name for itself by stripping extension and directories
             project_name = (project_file or 'New project').rsplit('.', 1)[0]
             project_name = os.path.basename(project_name)
         options['project-name'] = project_name
         response = self.server.urlopen(
-            'create-project-from-upload', options, params
+            'create-project-from-upload', options, params, files=files
         )
         # expecting a redirect to the new project containing the id in the url
-        url_params = urlparse.parse_qs(
-            urlparse.urlparse(response.geturl()).query)
+        url_params = urllib.parse.parse_qs(
+            urllib.parse.urlparse(response.geturl()).query)
         if 'project' in url_params:
             project_id = url_params['project'][0]
             return RefineProject(self.server, project_id)
@@ -430,7 +433,7 @@ class RefineProject:
     def export(self, encoding=None, export_format='tsv'):
         """Return a fileobject of a project's data."""
         url = ('export-rows/' +
-               urllib.quote(self.project_name().encode('utf8')) +
+               urllib.parse.quote(self.project_name().encode('utf8')) +
                '.' + export_format)
         data = {'format': export_format}
         if encoding:
@@ -441,7 +444,7 @@ class RefineProject:
                           template='', rowSeparator='\n', suffix=''):
         """Return a fileobject of a project's data in templating mode."""
         url = ('export-rows/' +
-               urllib.quote(self.project_name().encode('utf8')) +
+               urllib.parse.quote(self.project_name().encode('utf8')) +
                '.' + 'txt')
         data = {'format': 'template',
                 'template': template,
