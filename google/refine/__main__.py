@@ -213,7 +213,7 @@ def main():
         projects = list(refine.Refine(refine.RefineServer()).list_projects().items())
         idlist = []
         for project_id, project_info in projects:
-            if args[0].decode('UTF-8') == project_info['name']:
+            if args[0] == project_info['name']:
                 idlist.append(str(project_id))
         if len(idlist) > 1:
             print(('Error: Found %s projects with name %s.\n'

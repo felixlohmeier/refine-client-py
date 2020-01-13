@@ -24,6 +24,7 @@ import os
 import ssl
 import sys
 import time
+import requests
 import urllib.request, urllib.parse, urllib.error
 from xml.etree import ElementTree
 
@@ -156,9 +157,10 @@ def download(url, output_file=None):
               'Delete existing file or try command --output '
               'to specify a different filename.' % output_file))
         return
-    # Workaround for SSL verification problems in one-file-executables
-    context = ssl._create_unverified_context()
-    urllib.request.urlretrieve(url, output_file, context=context)
+
+    myfile = requests.get(url)
+    with open(output_file, 'wb') as fo:
+      fo.write(myfile.content)
     print(('Download to file %s complete' % output_file))
 
 
@@ -171,7 +173,7 @@ def export(project_id, encoding=None, output_file=None, export_format=None):
         if export_format in ['csv', 'tsv', 'txt']:
                 encoding = 'UTF-8'
         sys.stdout.write(project.export(
-            export_format=export_format, encoding=encoding).read())
+            export_format=export_format, encoding=encoding).text)
     else:
         ext = os.path.splitext(output_file)[1][1:]
         if ext:
@@ -180,9 +182,8 @@ def export(project_id, encoding=None, output_file=None, export_format=None):
             encoding = 'UTF-8'
         with open(output_file, 'wb') as f:
             f.write(project.export(
-                export_format=export_format, encoding=encoding).read())
+                export_format=export_format, encoding=encoding).content)
         print(('Export to file %s complete' % output_file))
-
 
 def info(project_id):
     """Show project metadata"""
@@ -267,10 +268,10 @@ def templating(project_id,
         # normal output
         if not output_file:
             sys.stdout.write(project.export_templating(
-                             **templateconfig).read())
+                             **templateconfig).text)
         else:
             with open(output_file, 'wb') as f:
-                f.write(project.export_templating(**templateconfig).read())
+                f.write(project.export_templating(**templateconfig).content)
             print(('Export to file %s complete' % output_file))
     else:
         # splitToFiles functionality
@@ -294,7 +295,7 @@ def templating(project_id,
                                   'rowSeparator': '\n',
                                   'encoding': encoding}
             ids = [line.rstrip('\n') for line in project.export_templating(
-                   **ids_templateconfig) if line.rstrip('\n')]
+                   **ids_templateconfig).text if line.rstrip('\n')]
         # generate common config
         if mode == 'record-based':
             # record-based: split-character into template
@@ -316,12 +317,12 @@ def templating(project_id,
                                    'rowSeparator': ''})
         # execute
         records = project.export_templating(
-            **templateconfig).read().split(split)
+            **templateconfig).text.split(split)
         del records[0]  # skip first blank entry
         if suffixById:
             for index, record in enumerate(records):
                 output_file = base + '_' + ids[index] + '.' + ext
-                with open(output_file, 'wb') as f:
+                with open(output_file, 'w') as f:
                     f.writelines([prefix, record, suffix])
             print(('Export to files complete. Last file: %s' % output_file))
         else:
@@ -329,6 +330,6 @@ def templating(project_id,
             for index, record in enumerate(records):
                 output_file = base + '_' + \
                     str(index + 1).zfill(zeros) + '.' + ext
-                with open(output_file, 'wb') as f:
+                with open(output_file, 'w') as f:
                     f.writelines([prefix, record, suffix])
             print(('Export to files complete. Last file: %s' % output_file))

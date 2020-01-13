@@ -13,7 +13,9 @@ import csv
 import unittest
 
 from google.refine import refine
-from tests import refinetest
+import refinetest
+
+from io import StringIO
 
 
 class RefineServerTest(refinetest.RefineTestCase):
@@ -37,7 +39,7 @@ class RefineServerTest(refinetest.RefineTestCase):
             self.assertTrue(item in version_info)
 
     def test_version(self):
-        self.assertTrue(self.server.version in ('2.0', '2.1', '2.5'))
+        self.assertTrue(self.server.version in ('3.2'))
 
 
 class RefineTest(refinetest.RefineTestCase):
@@ -59,21 +61,19 @@ class RefineTest(refinetest.RefineTestCase):
         self.assertTrue(self.project.delete())
 
     def test_open_export(self):
-        fp = refine.RefineProject(self.project.project_url()).export()
-        line = fp.next()
-        self.assertTrue('email' in line)
-        for line in fp:
+        response = refine.RefineProject(self.project.project_url()).export()
+        lines = response.text.splitlines()
+        self.assertTrue('email' in lines[0])
+        for line in lines[1:]:
             self.assertTrue('M' in line or 'F' in line)
-        fp.close()
 
     def test_open_export_csv(self):
-        fp = refine.RefineProject(self.project.project_url()).export()
-        csv_fp = csv.reader(fp, dialect='excel-tab')
-        row = csv_fp.next()
+        response = refine.RefineProject(self.project.project_url()).export()
+        csv_fp = csv.reader(StringIO(response.text), dialect='excel-tab')
+        row = csv_fp.__next__()
         self.assertTrue(row[0] == 'email')
         for row in csv_fp:
             self.assertTrue(row[3] == 'F' or row[3] == 'M')
-        fp.close()
 
 
 if __name__ == '__main__':

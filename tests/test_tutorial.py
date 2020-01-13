@@ -17,7 +17,7 @@ OPENREFINE_HOST and OPENREFINE_PORT.
 import unittest
 
 from google.refine import facet
-from tests import refinetest
+import refinetest
 
 
 class TutorialTestFacets(refinetest.RefineTestCase):
@@ -138,7 +138,7 @@ class TutorialTestEditing(refinetest.RefineTestCase):
         # {2}
         self.project.text_transform(column='Zip Code 2',
                                     expression='value.toString()[0, 5]')
-        self.assertInResponse('transform on 6067 cells in column Zip Code 2')
+        self.assertInResponse('transform on 6958 cells in column Zip Code 2')
         # {3} - XXX history
         # {4}
         office_title_facet = facet.TextFacet('Office Title')
@@ -156,14 +156,14 @@ class TutorialTestEditing(refinetest.RefineTestCase):
         self.assertEqual(len(response.facets[office_title_facet].choices), 66)
         # {6}
         response = self.project.compute_clusters('Office Title')
-        self.assertTrue(not response)
+        self.assertTrue(response)
         # {7}
         clusters = self.project.compute_clusters('Office Title', 'knn')
         self.assertEqual(len(clusters), 7)
         first_cluster = clusters[0]
         self.assertEqual(len(first_cluster), 2)
-        self.assertEqual(first_cluster[0]['value'], 'RSCC Member')
-        self.assertEqual(first_cluster[0]['count'], 233)
+        self.assertEqual(first_cluster[0]['value'], 'DPEC Member at Large')
+        self.assertEqual(first_cluster[0]['count'], 6)
         # Not strictly necessary to repeat 'Council Member' but a test
         # of mass_edit, and it's also what the front end sends.
         self.project.mass_edit('Office Title', [{
@@ -194,9 +194,9 @@ class TutorialTestEditing(refinetest.RefineTestCase):
         # {5}, {6}, {7}
         response = self.project.compute_facets(facet.StarredFacet(True))
         self.assertEqual(len(response.facets[0].choices), 2)    # true & false
-        self.assertEqual(response.facets[0].choices[True].count, 3)
+        self.assertEqual(response.facets[0].choices[True].count, 2)
         self.project.remove_rows()
-        self.assertInResponse('3 rows')
+        self.assertInResponse('2 rows')
 
 
 class TutorialTestDuplicateDetection(refinetest.RefineTestCase):
@@ -214,7 +214,7 @@ class TutorialTestDuplicateDetection(refinetest.RefineTestCase):
         self.assertInResponse('Reorder rows')
         response = self.project.get_rows()
         indexes = [row.index for row in response.rows]
-        self.assertEqual(indexes, range(10))
+        self.assertEqual(indexes, list(range(10)))
         # {10}
         self.project.add_column(
             'email', 'count', 'facetCount(value, "value", "email")')
@@ -393,7 +393,7 @@ class TutorialTestTransposeVariableNumberOfRowsIntoColumns(
             'Column', 'row.record.cells["Column"].value[1, -1].join("|")')
         self.assertInResponse('18 cells')
         # {26}
-        self.project.engine.mode = 'row-based'
+        self.project.engine.mode = 'fd'
         # {27}
         blank_facet = facet.BlankFacet('First Line', selection=True)
         self.project.remove_rows(blank_facet)

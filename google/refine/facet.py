@@ -208,7 +208,10 @@ class FacetsResponse(object):
                 return self.facets[index]
 
         self.facets = FacetResponseContainer(facets['facets'])
-        self.mode = facets['mode']
+        if facets.get('mode'):
+            self.mode = facets['mode']
+        else:
+            self.mode = facets['engine-mode']
 
 
 class Engine(object):

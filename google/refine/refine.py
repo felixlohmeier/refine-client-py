@@ -55,7 +55,7 @@ class RefineServer(object):
         self.server = server[:-1] if server.endswith('/') else server
         self.__version = None     # see version @property below
 
-    def urlopen(self, command, data=None, params=None, project_id=None):
+    def urlopen(self, command, data=None, params=None, project_id=None, files=None):
         """Open a Refine URL and with optional query params and POST data.
 
         data: POST data dict
@@ -83,12 +83,13 @@ class RefineServer(object):
                 response = requests.get(url)
             else:
                 response = requests.post(url, data=data, files=files)
+            response.raise_for_status()
         except requests.exceptions.HTTPError as e:
-            raise Exception('HTTP %d "%s" for %s\n\t%s' % (e.code, e.msg, e.geturl(), data))
+            raise Exception('HTTP Error: %s' % (e))
         except requests.exceptions.URLRequired as e:
             raise requests.exceptions.URLRequired(
                 '%s for %s. No Refine server reachable/running; ENV set?' %
-                (e.reason, self.server))
+                (e, self.server))
 
         if response.encoding == 'gzip':
             # Need a seekable filestream for gzip
@@ -102,8 +103,16 @@ class RefineServer(object):
         """Open a Refine URL, optionally POST data, and return parsed JSON."""
         response = self.urlopen(*args, **kwargs).json()
         if 'code' in response and response['code'] not in ('ok', 'pending'):
-            error_message = ('server ' + response['code'] + ': ' +
-                             response.get('message', response.get('stack', response)))
+            error_hint = ""
+            if response.get('message') and response['message'] is not None:
+                error_hint += response['message']
+            if response.get('stack') and response['stack'] is not None:
+                error_hint += response['stack']
+            if not error_hint:
+                error_hint += str(response)
+
+            error_message = 'server ' + response['code'] + ':\n' + error_hint
+
             raise Exception(error_message)
         return response
 
@@ -274,9 +283,11 @@ class Refine:
         response = self.server.urlopen(
             'create-project-from-upload', options, params, files=files
         )
+        if project_file:
+            files['project-file'].close()
         # expecting a redirect to the new project containing the id in the url
         url_params = urllib.parse.parse_qs(
-            urllib.parse.urlparse(response.geturl()).query)
+            urllib.parse.urlparse(response.url).query)
         if 'project' in url_params:
             project_id = url_params['project'][0]
             return RefineProject(self.server, project_id)
