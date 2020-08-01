@@ -334,10 +334,10 @@ See also:
 
 ## Python
 
-[openrefine-client](https://pypi.org/project/openrefine-client/) [![PyPI](https://img.shields.io/pypi/v/openrefine-client)](https://pypi.org/project/openrefine-client/) (requires Python 2.x)
+[openrefine-client](https://pypi.org/project/openrefine-client/) [![PyPI](https://img.shields.io/pypi/v/openrefine-client)](https://pypi.org/project/openrefine-client/) (requires Python 3.x)
 
 ```sh
-python2 -m pip install openrefine-client --user
+python3 -m pip install openrefine-client --user
 ```
 
 This will install the package `openrefine-client` containing modules in `google.refine`.
@@ -352,7 +352,7 @@ openrefine-client --help
 
 Usage: same commands as explained above (see [Basic Commands](#basic-commands) and [Advanced Templating](#advanced-templating))
 
-### Option 2: using cli functions in Python 2.x environment
+### Option 2: using cli functions in Python 3.x environment
 
 Import module cli:
 
@@ -436,158 +436,9 @@ Commands:
   cli.delete(p1.project_id)
   ```
 
-### Option 3: the upstream way
-
-This fork can be used in the same way as the upstream [Python client library](https://github.com/PaulMakepeace/refine-client-py/).
-
-Some functions in the python client library are not yet compatible with OpenRefine >=3.0 (cf. [issue #19 in refine-client-py](https://github.com/paulmakepeace/refine-client-py/issues/19)).
-
-Import module refine:
-
-```python
-from google.refine import refine
-```
-
-Server Commands:
-
-* set up connection:
-
-  ```python
-  server1 = refine.Refine('http://localhost:3333')
-  ```
-
-- show version:
-
-  ```python
-  server1.server.get_version()
-  server1.server.version
-  ```
-
-- list projects:
-
-  ```python
-  server1.list_projects()
-  ```
-
-  - pretty print the returned dict with json.dumps:
-
-    ```python
-    import json
-    print(json.dumps(server1.list_projects(), indent=1))
-    ```
-
-- create project:
-
-  ```python
-  server1.new_project(project_file='duplicates.csv')
-  ```
-
-  * create and open the returned project in one step:
-
-    ```python
-    project1 = server1.new_project(project_file='duplicates.csv')
-    ```
-
-Project commands:
-
-* open project:
-
-  ```python
-  project1 = server1.open_project('1234567890123')
-  ```
-
-* print full URL to project:
-
-  ```python
-  project1.project_url()
-  ```
-
-* list columns:
-
-  ```python
-  project1.columns
-  ```
-
-* compute text facet on first column (**fails with OpenRefine >=3.2**):
-
-  ```python
-  project1.compute_facets(facet.TextFacet(project1.columns[0]))
-  ```
-
-  * print returned object
-
-    ```python
-    facets = project1.compute_facets(facet.TextFacet(project1.columns[0])).facets[0]
-    for k in sorted(facets.choices, key=lambda k: facets.choices[k].count, reverse=True):
-        print(facets.choices[k].count, k)
-    ```
-
-* compute clusters on first column:
-
-  ```python
-  project1.compute_clusters(project1.columns[0])
-  ```
-
-* apply rules from file to project:
-
-  ```python
-  project1.apply_operations('duplicates-deletion.json')
-  ```
-
-* export project:
-
-  ```python
-  project1.export(export_format='tsv')
-  ```
-
-  * print the returned fileobject:
-
-    ```python
-    print(project1.export(export_format='tsv').read())
-    ```
-
-  * save the returned fileobject to file:
-
-    ```python
-    with open('export.tsv', 'wb') as f:
-        f.write(project1.export(export_format='tsv').read())
-    ```
-
-* templating export (**function was added in this fork**, see [Advanced Templating](#advanced-templating) above):
-
-  ```python
-  data = project1.export_templating(
-      prefix='''{ "events" : [
-  ''',template='''    { "name" : {{jsonize(cells["name"].value)}}, "purchase" : {{jsonize(cells["purchase"].value)}} }''',
-      rowSeparator=''',
-  ''',suffix='''
-  ] }''')
-  print(data.read())
-  ```
-
-* print help screen with available commands (many more!):
-
-  ```python
-  help(project1)
-  ```
-
-* example for custom commands:
-
-  ```python
-  project1.do_json('get-rows')['total']
-  ```
-
-* delete project:
-
-  ```python
-  project1.delete()
-  ```
-
 See also:
 
-- Jupyter notebook by Trevor Muñoz (2013-08-18): [Programmatic Use of Open Refine to Facet and Cluster Names of 'Dishes' from NYPL's What's on the menu?](https://nbviewer.jupyter.org/gist/trevormunoz/6265360)
 - Jupyter notebook by Tony Hirst (2019-01-09) [Notebook demonstrating how to control OpenRefine via a Python client.](https://nbviewer.jupyter.org/github/ouseful-PR/openrefineder/blob/4cef25a4ca6077536c5f49cafb531499fbcad96e/notebooks/OpenRefine%20Demos.ipynb)
-- Unittests [test_refine.py](tests/test_refine.py) and [test_tutorial.py](tests/test_tutorial.py) (both importing [refinetest.py](tests/refinetest.py))
 - [OpenRefine API](https://github.com/OpenRefine/OpenRefine/wiki/OpenRefine-API) in official OpenRefine wiki
 
 ## Binder
@@ -598,29 +449,12 @@ See also:
 - no registration needed, will start within a few minutes
 - [restricted](https://mybinder.readthedocs.io/en/latest/faq.html#how-much-memory-am-i-given-when-using-binder) to 2 GB RAM and server will be deleted after 10 minutes of inactivity
 - [bash_kernel demo notebook](https://nbviewer.jupyter.org/github/felixlohmeier/openrefineder/blob/master/openrefine-client-bash.ipynb) for using the openrefine-client in a Linux Bash environment [![Binder](https://mybinder.org/badge.svg)](https://mybinder.org/v2/gh/felixlohmeier/openrefineder/master?urlpath=/tree/openrefine-client-bash.ipynb)
-- [python2 demo notebook](https://nbviewer.jupyter.org/github/felixlohmeier/openrefineder/blob/master/openrefine-client-python.ipynb) for using the openrefine-client in a Python 2 environment [![Binder](https://mybinder.org/badge.svg)](https://mybinder.org/v2/gh/felixlohmeier/openrefineder/master?urlpath=/tree/openrefine-client-python.ipynb)
 
 ## Development
 
-If you would like to contribute to the Python client library please consider a pull request to the upstream repository [refine-client-py](https://github.com/PaulMakepeace/refine-client-py/).
-
 ### Tests
 
-Ensure you have OpenRefine running (i.e. available at http://localhost:3333). If necessary set the environment variables `OPENREFINE_HOST` and `OPENREFINE_PORT` to change the URL.
-
-The Python client library includes several unit tests.
-
-- run all tests
-
-  ```sh
-  python setup.py test
-  ```
-
-- run subset test_facet
-
-  ```sh
-  python setup.py --test-suite tests.test_facet
-  ```
+TODO
 
 There is also a script that uses docker images to run the unit tests with different versions of OpenRefine.
 
@@ -656,9 +490,8 @@ Note to myself: When releasing a new version...
 
    ```sh
    ./tests.sh -a
-   jupyter notebook tests/cli_python2.ipynb
    ```
-
+   
 2. Make final changes in Git
 
    - update versions (e.g. 0.3.7 und 0-3-7) in [README.md](https://github.com/opencultureconsulting/openrefine-client/blob/master/README.md#download)
@@ -667,7 +500,7 @@ Note to myself: When releasing a new version...
 
 3. Build executables with PyInstaller
 
-   - Run PyInstaller in Python 2 environments on native Windows, macOS and Linux. Should be "the oldest version of the OS you need to support"! Current release is built with: 
+   - Run PyInstaller in Python 3 environments on native Windows, macOS and Linux. Should be "the oldest version of the OS you need to support"! Current release is built with: 
 
      - Ubuntu 16.04 LTS (64-bit)
      - macOS Sierra 10.12
@@ -678,8 +511,8 @@ Note to myself: When releasing a new version...
      ```sh
      git clone https://github.com/opencultureconsulting/openrefine-client.git
      cd openrefine-client
-     python -m pip install . --user
-     python -m pip install pyinstaller --user
+     python3 -m pip install . --user
+     python3 -m pip install pyinstaller --user
      pyinstaller --onefile refine.py --hidden-import google.refine.__main__
      ```
 
@@ -687,9 +520,8 @@ Note to myself: When releasing a new version...
 
    ```sh
    ./tests.sh -a
-   jupyter notebook tests/cli_bash.ipynb
    ```
-
+   
 5. Create release in GitHub
 
    - draft [release notes](https://github.com/opencultureconsulting/openrefine-client/releases) and attach one-file-executables
@@ -697,6 +529,7 @@ Note to myself: When releasing a new version...
 6. Build package and upload to PyPI
 
    ```sh
+   TODO
    python3 setup.py sdist bdist_wheel
    python3 -m twine upload dist/*
    ```
@@ -710,7 +543,7 @@ Note to myself: When releasing a new version...
 
    - openrefine-batch: [openrefine-batch.sh](https://github.com/opencultureconsulting/openrefine-batch/blob/master/openrefine-batch.sh#L7) and [openrefine-batch-docker.sh](https://github.com/opencultureconsulting/openrefine-batch/blob/master/openrefine-batch-docker.sh)
 
-   - openrefineder: [postBuild](https://github.com/felixlohmeier/openrefineder/blob/master/postBuild)
+   - openrefineder: [postBuild](https://github.com/felixlohmeier/openrefineder/blob/master/postBuild) and [openrefine-client-bash.ipynb](https://github.com/felixlohmeier/openrefineder/blob/master/openrefine-client-python.ipynb)
 
 ## Credits
 
@@ -718,14 +551,6 @@ Note to myself: When releasing a new version...
 
 David Huynh, [initial cut](<http://markmail.org/message/jsxzlcu3gn6drtb7)
 
-[Artfinder](http://www.artfinder.com), inspiration
+[Felix Lohmeier](https://felixlohmeier.de), CLI features
 
-[Felix Lohmeier](https://felixlohmeier.de), extended the CLI features
-
-Some data used in the test suite has been used from publicly available sources:
-
-- louisiana-elected-officials.csv: from http://www.sos.louisiana.gov/tabid/136/Default.aspx
-
-- us_economic_assistance.csv: ["The Green Book"](http://www.data.gov/raw/1554)
-
-- eli-lilly.csv: [ProPublica's "Docs for Dollars](http://projects.propublica.org/docdollars) leading to a [Lilly Faculty PDF](http://www.lillyfacultyregistry.com/documents/EliLillyFacultyRegistryQ22010.pdf) processed by [David Huynh's ScraperWiki script](http://scraperwiki.com/scrapers/eli-lilly-dollars-for-docs-scraper/edit/)
+[Wolf Vollprecht](https://github.com/wolfv), port to python 3
