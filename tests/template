@@ -1,0 +1,60 @@
+#!/bin/bash
+
+# =============================== ENVIRONMENT ================================ #
+
+t="test"
+
+if [[ ${1} ]]; then
+  version="${1##*.}"
+fi
+
+cd "${BASH_SOURCE%/*}/" || exit 1
+client="python3 ../refine.py -H localhost -P 3334"
+mkdir -p "tmp/${t}"
+
+# =================================== DATA =================================== #
+
+cat << "DATA" > "tmp/${t}/${t}.csv"
+a,b,c
+1,2,3
+0,0,0
+$,\,'
+DATA
+
+cat << "DATA" > "tmp/${t}/${t}.transform"
+[
+  {
+    "op": "core/column-addition",
+    "engineConfig": {
+      "mode": "row-based"
+    },
+    "newColumnName": "apply",
+    "columnInsertIndex": 2,
+    "baseColumnName": "b",
+    "expression": "grel:value.replace('2','TEST')",
+    "onError": "set-to-blank"
+  }
+]
+DATA
+
+# ================================= ASSERTION ================================ #
+
+# if [[ "$version" >= 2 ]]; then
+cat << "DATA" > "tmp/${t}/${t}.assert"
+a	b	apply	c
+1	2	TEST	3
+0	0	0	0
+$	\	\	'
+DATA
+# else
+# fi
+
+# ================================== ACTION ================================== #
+
+${client} --create "tmp/${t}/${t}.csv"
+${client} --apply "tmp/${t}/${t}.transform" "${t}"
+${client} --export "${t}" --output "tmp/${t}/${t}.output"
+
+# =================================== TEST =================================== #
+
+diff -u "tmp/${t}/${t}.assert" "tmp/${t}/${t}.output"

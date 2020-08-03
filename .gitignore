@@ -4,4 +4,5 @@ dist
 .*
 openrefine_client.egg-info
 refine.spec
-README.html
+openrefine-3.*
+tests.log
