@@ -20,13 +20,21 @@
 
 cd "${BASH_SOURCE%/*}/" || exit 1
 
+port=3334
+
 if [[ ${1} ]]; then
   version="${1}"
 else
   version="3.2"
 fi
-
 refine="openrefine-${version}/refine"
+
+if [[ ${2} ]]; then
+  client="$(readlink -e "${2}")"
+else
+  client="python3 $(readlink -e refine.py)"
+fi
+cmd="${client} -H localhost -P ${port}"
 
 # =============================== REQUIREMENTS =============================== #
 
@@ -66,7 +74,7 @@ mkdir -p "${dir}"
 rm -f tests.log
 
 echo "start OpenRefine server..."
-${refine} -v warn -p 3334 -d "${dir}" &>> tests.log &
+${refine} -v warn -p ${port} -d "${dir}" &>> tests.log &
 pid_server=${!}
 timeout 30s bash -c "until curl -s 'http://localhost:3334' \
   | cat | grep -q -o 'OpenRefine' ; do sleep 1; done" \
@@ -81,16 +89,23 @@ results=()
 for t in tests/*.sh; do
   tests+=("${t}")
   echo "========================= ${t} =========================" &>> tests.log
-  ${t} ${version} >> tests.log
+  ${t} "${cmd}" "${version}" &>> tests.log
   results+=(${?})
 done
 echo
 
+# ================================= TEARDOWN ================================= #
+
+echo "cleanup..."
+{ kill -9 "${pid_server}" && wait "${pid_server}"; } 2>/dev/null
+rm -rf "${dir}"
+echo
+
 # ================================= SUMMARY ================================== #
 
+printf "%s\t%s\n" "code" "test"
+printf "%s\t%s\n" "----" "----------------"
 for i in "${!tests[@]}"; do
-  printf "%s\t%s\n" "code" "test"
-  printf "%s\t%s\n" "----" "----------------"
   printf "%s\t%s\n" "${results[$i]}" "${tests[$i]}"
 done
 echo
@@ -99,9 +114,3 @@ if [[ " ${results[*]} " =~ [1-9] ]]; then
 else
   echo "all tests passed!"; echo
 fi
-
-# ================================= TEARDOWN ================================= #
-
-echo "cleanup..."
-{ kill -9 "${pid_server}" && wait "${pid_server}"; } 2>/dev/null
-rm -rf "${dir}"

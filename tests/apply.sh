@@ -7,9 +7,6 @@ if [[ ${1} ]]; then
 else
   echo 1>&2 "execute tests.sh to run all tests"; exit 1
 fi
-#if [[ ${2} ]]; then
-#  version="${2##*.}"
-#fi
 
 t="$(basename "${BASH_SOURCE[0]}" .sh)"
 cd "${BASH_SOURCE%/*}/" || exit 1
@@ -42,15 +39,12 @@ DATA
 
 # ================================= ASSERTION ================================ #
 
-#if [[ "$version" >= 2 ]]; then
 cat << "DATA" > "tmp/${t}/${t}.assert"
 a	b	apply	c
 1	2	TEST	3
 0	0	0	0
 $	\	\	'
 DATA
-#else
-#fi
 
 # ================================== ACTION ================================== #
 
