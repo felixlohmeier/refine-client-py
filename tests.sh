@@ -62,7 +62,7 @@ fi
 # ================================== SETUP =================================== #
 
 dir="$(readlink -f "tests/tmp")"
-mkdir -p ${dir}
+mkdir -p "${dir}"
 rm -f tests.log
 
 echo "start OpenRefine server..."
@@ -94,7 +94,7 @@ for i in "${!tests[@]}"; do
   printf "%s\t%s\n" "${results[$i]}" "${tests[$i]}"
 done
 echo
-if [[ " ${results[@]} " =~ [1-9] ]]; then
+if [[ " ${results[*]} " =~ [1-9] ]]; then
   echo "failed tests! check tests.log for debugging"; echo
 else
   echo "all tests passed!"; echo
@@ -104,4 +104,4 @@ fi
 
 echo "cleanup..."
 { kill -9 "${pid_server}" && wait "${pid_server}"; } 2>/dev/null
-rm -rf ${dir}
+rm -rf "${dir}"
