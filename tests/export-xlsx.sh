@@ -21,36 +21,22 @@ a,b,c
 $,\,'
 DATA
 
-cat << "DATA" > "tmp/${t}/${t}.transform"
-[
-  {
-    "op": "core/column-addition",
-    "engineConfig": {
-      "mode": "row-based"
-    },
-    "newColumnName": "apply",
-    "columnInsertIndex": 2,
-    "baseColumnName": "b",
-    "expression": "grel:value.replace('2','⛲')",
-    "onError": "set-to-blank"
-  }
-]
-DATA
-
 # ================================= ASSERTION ================================ #
 
 cat << "DATA" > "tmp/${t}/${t}.assert"
-a	b	apply	c
-1	2	⛲	3
-0	0	0	0
-$	\	\	'
+a,b,c
+1,2,3
+0,0,0
+$,\,'
 DATA
 
 # ================================== ACTION ================================== #
 
 ${cmd} --create "tmp/${t}/${t}.csv"
-${cmd} --apply "tmp/${t}/${t}.transform" "${t}"
-${cmd} --export "${t}" --output "tmp/${t}/${t}.output"
+${cmd} --export "${t}" --output "tmp/${t}/${t}.xlsx"
+(cd tmp/${t} &&
+  ssconvert -S ${t}.xlsx ${t}.csv &&
+  mv ${t}.csv ${t}.output)
 
 # =================================== TEST =================================== #
 

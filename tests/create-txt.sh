@@ -14,42 +14,24 @@ mkdir -p "tmp/${t}"
 
 # =================================== DATA =================================== #
 
-cat << "DATA" > "tmp/${t}/${t}.csv"
-a,b,c
-1,2,3
-0,0,0
-$,\,'
-DATA
-
-cat << "DATA" > "tmp/${t}/${t}.transform"
-[
-  {
-    "op": "core/column-addition",
-    "engineConfig": {
-      "mode": "row-based"
-    },
-    "newColumnName": "apply",
-    "columnInsertIndex": 2,
-    "baseColumnName": "b",
-    "expression": "grel:value.replace('2','⛲')",
-    "onError": "set-to-blank"
-  }
-]
+cat << "DATA" > "tmp/${t}/${t}.txt"
+1 2 3
+mon tue wed
+$2 $300 $1
 DATA
 
 # ================================= ASSERTION ================================ #
 
 cat << "DATA" > "tmp/${t}/${t}.assert"
-a	b	apply	c
-1	2	⛲	3
-0	0	0	0
-$	\	\	'
+Column 1
+1 2 3
+mon tue wed
+$2 $300 $1
 DATA
 
 # ================================== ACTION ================================== #
 
-${cmd} --create "tmp/${t}/${t}.csv"
-${cmd} --apply "tmp/${t}/${t}.transform" "${t}"
+${cmd} --create "tmp/${t}/${t}.txt"
 ${cmd} --export "${t}" --output "tmp/${t}/${t}.output"
 
 # =================================== TEST =================================== #

@@ -14,25 +14,22 @@ mkdir -p "tmp/${t}"
 
 # =================================== DATA =================================== #
 
-cat << "DATA" > "tmp/${t}/${t}.csv"
-a,b,c
-1,2,3
-0,0,0
-$,\,'
-DATA
-
-cat << "DATA" > "tmp/${t}/${t}.transform"
+cat << "DATA" > "tmp/${t}/${t}.json"
 [
   {
-    "op": "core/column-addition",
-    "engineConfig": {
-      "mode": "row-based"
-    },
-    "newColumnName": "apply",
-    "columnInsertIndex": 2,
-    "baseColumnName": "b",
-    "expression": "grel:value.replace('2','⛲')",
-    "onError": "set-to-blank"
+    "⌨": "⛲",
+    "code": "1F347",
+    "meaning": "FOUNTAIN"
+  },
+  {
+    "⌨": "⛳",
+    "code": "1F349",
+    "meaning": "FLAG IN HOLE"
+  },
+  {
+    "⌨": "⛵",
+    "code": "1F352",
+    "meaning": "SAILBOAT"
   }
 ]
 DATA
@@ -40,16 +37,15 @@ DATA
 # ================================= ASSERTION ================================ #
 
 cat << "DATA" > "tmp/${t}/${t}.assert"
-a	b	apply	c
-1	2	⛲	3
-0	0	0	0
-$	\	\	'
+_ - ⌨	_ - code	_ - meaning
+⛲	1F347	FOUNTAIN
+⛳	1F349	FLAG IN HOLE
+⛵	1F352	SAILBOAT
 DATA
 
 # ================================== ACTION ================================== #
 
-${cmd} --create "tmp/${t}/${t}.csv"
-${cmd} --apply "tmp/${t}/${t}.transform" "${t}"
+${cmd} --create "tmp/${t}/${t}.json"
 ${cmd} --export "${t}" --output "tmp/${t}/${t}.output"
 
 # =================================== TEST =================================== #

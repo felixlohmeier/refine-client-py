@@ -14,44 +14,27 @@ mkdir -p "tmp/${t}"
 
 # =================================== DATA =================================== #
 
-cat << "DATA" > "tmp/${t}/${t}.csv"
-a,b,c
-1,2,3
-0,0,0
-$,\,'
-DATA
-
-cat << "DATA" > "tmp/${t}/${t}.transform"
-[
-  {
-    "op": "core/column-addition",
-    "engineConfig": {
-      "mode": "row-based"
-    },
-    "newColumnName": "apply",
-    "columnInsertIndex": 2,
-    "baseColumnName": "b",
-    "expression": "grel:value.replace('2','⛲')",
-    "onError": "set-to-blank"
-  }
-]
+cat << "DATA" > "tmp/${t}/${t}.tsv"
+⌨	code	meaning
+⛲	1F347	FOUNTAIN
+⛳	1F349	FLAG IN HOLE
+⛵	1F352	SAILBOAT
 DATA
 
 # ================================= ASSERTION ================================ #
 
 cat << "DATA" > "tmp/${t}/${t}.assert"
-a	b	apply	c
-1	2	⛲	3
-0	0	0	0
-$	\	\	'
+⌨,code,meaning
+⛲,1F347,FOUNTAIN
+⛳,1F349,FLAG IN HOLE
+⛵,1F352,SAILBOAT
 DATA
 
 # ================================== ACTION ================================== #
 
-${cmd} --create "tmp/${t}/${t}.csv"
-${cmd} --apply "tmp/${t}/${t}.transform" "${t}"
-${cmd} --export "${t}" --output "tmp/${t}/${t}.output"
+${cmd} --create "tmp/${t}/${t}.tsv"
+${cmd} --export "${t}" --output "tmp/${t}/${t}.csv"
 
 # =================================== TEST =================================== #
 
-diff -u "tmp/${t}/${t}.assert" "tmp/${t}/${t}.output"
+diff -u "tmp/${t}/${t}.assert" "tmp/${t}/${t}.csv"

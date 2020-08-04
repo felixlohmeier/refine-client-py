@@ -14,23 +14,37 @@ mkdir -p "tmp/${t}"
 
 # =================================== DATA =================================== #
 
-cat << "DATA" > "tmp/${t}/${t}.tsv"
-a	b	c
-1	2	3
+cat << "DATA" > "tmp/${t}/${t}.csv"
+a,b,c
+1,2,3
+0,0,0
+$,\,'
 DATA
 
 # ================================= ASSERTION ================================ #
 
 cat << "DATA" > "tmp/${t}/${t}.assert"
-a,b,c
-1,2,3
+<html>
+<head>
+<title>export-html</title>
+<meta charset="utf-8" />
+</head>
+<body>
+<table>
+<tr><th>a</th><th>b</th><th>c</th></tr>
+<tr><td>1</td><td>2</td><td>3</td></tr>
+<tr><td>0</td><td>0</td><td>0</td></tr>
+<tr><td>$</td><td>\</td><td>&apos;</td></tr>
+</table>
+</body>
+</html>
 DATA
 
 # ================================== ACTION ================================== #
 
-${cmd} --create "tmp/${t}/${t}.tsv"
-${cmd} --export "${t}" --output "tmp/${t}/biểu tượng cảm xúc 🍉.csv"
+${cmd} --create "tmp/${t}/${t}.csv"
+${cmd} --export "${t}" --output "tmp/${t}/${t}.html"
 
 # =================================== TEST =================================== #
 
-diff -u "tmp/${t}/${t}.assert" "tmp/${t}/biểu tượng cảm xúc 🍉.csv"
+diff -u "tmp/${t}/${t}.assert" "tmp/${t}/${t}.html"

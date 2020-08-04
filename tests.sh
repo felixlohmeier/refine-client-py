@@ -89,7 +89,7 @@ results=()
 for t in tests/*.sh; do
   tests+=("${t}")
   echo "========================= ${t} =========================" &>> tests.log
-  ${t} "${cmd}" "${version}" &>> tests.log
+  bash ${t} "${cmd}" "${version}" &>> tests.log
   results+=(${?})
 done
 echo

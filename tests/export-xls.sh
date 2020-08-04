@@ -16,20 +16,27 @@ mkdir -p "tmp/${t}"
 
 cat << "DATA" > "tmp/${t}/${t}.csv"
 a,b,c
-🍉,🍒,🍓
+1,2,3
+0,0,0
+$,\,'
 DATA
 
 # ================================= ASSERTION ================================ #
 
 cat << "DATA" > "tmp/${t}/${t}.assert"
-a	b	c
-🍉	🍒	🍓
+a,b,c
+1,2,3
+0,0,0
+$,\,'
 DATA
 
 # ================================== ACTION ================================== #
 
-${cmd} --create "tmp/${t}/${t}.csv" --projectName "${t} biểu tượng cảm xúc 🍉"
-${cmd} --export "${t} biểu tượng cảm xúc 🍉" --output "tmp/${t}/${t}.output"
+${cmd} --create "tmp/${t}/${t}.csv"
+${cmd} --export "${t}" --output "tmp/${t}/${t}.xls"
+(cd tmp/${t} &&
+  ssconvert -S ${t}.xls ${t}.csv &&
+  mv ${t}.csv ${t}.output)
 
 # =================================== TEST =================================== #
 

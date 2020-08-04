@@ -26,8 +26,8 @@ DATA
 
 # ================================== ACTION ================================== #
 
-${cmd} --create "tmp/${t}/${t}.csv" --projectName "${t} biểu tượng cảm xúc 🍉"
-${cmd} --delete "${t} biểu tượng cảm xúc 🍉"
+${cmd} --create "tmp/${t}/${t}.csv" --projectName "${t} biểu tượng cảm xúc ⛲"
+${cmd} --delete "${t} biểu tượng cảm xúc ⛲"
 ${cmd} --list | grep "${t}" | cut -d ':' -f 2 > "tmp/${t}/${t}.output"
 
 # =================================== TEST =================================== #
