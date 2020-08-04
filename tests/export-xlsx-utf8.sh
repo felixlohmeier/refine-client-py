@@ -34,9 +34,9 @@ DATA
 
 ${cmd} --create "tmp/${t}/${t}.csv"
 ${cmd} --export "${t}" --output "tmp/${t}/${t}.xlsx"
-(cd tmp/${t} &&
-  ssconvert -S ${t}.xlsx ${t}.csv &&
-  mv ${t}.csv ${t}.output)
+(cd tmp/"${t}" &&
+  ssconvert -S "${t}.xlsx" "${t}.csv" &&
+  mv "${t}.csv" "${t}.output")
 
 # =================================== TEST =================================== #
 
