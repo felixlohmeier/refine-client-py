@@ -248,6 +248,7 @@ class Refine:
         # POST is broken at the moment, so we send it in the URL
         new_style_options = dict(opts, **{
             'encoding': s(encoding),
+            'separator': s(separator)
         })
         params = {
             'options': json.dumps(new_style_options),
@@ -256,7 +257,6 @@ class Refine:
         # old style options
         options = {
             'format': project_format,
-            'separator': s(separator),
             'ignore-lines': s(ignore_lines),
             'header-lines': s(header_lines),
             'skip-data-lines': s(skip_data_lines),
@@ -265,7 +265,7 @@ class Refine:
             'process-quotes': s(process_quotes),
             'store-blank-rows': s(store_blank_rows),
             'store-blank-cells-as-nulls': s(store_blank_cells_as_nulls),
-            'include-file-sources': s(include_file_sources),
+            'include-file-sources': s(include_file_sources)
         }
 
         files = None
