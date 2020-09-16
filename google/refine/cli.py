@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#!/usr/bin/env python3
 """
 Functions used by the command line interface (CLI)
 """
@@ -24,7 +24,8 @@ import os
 import ssl
 import sys
 import time
-import urllib
+import requests
+import urllib.request, urllib.parse, urllib.error
 from xml.etree import ElementTree
 
 from google.refine import refine
@@ -38,8 +39,8 @@ def apply(project_id, history_file):
         raise Exception('Failed to apply %s to %s: %s' %
                         (history_file, project_id, response))
     else:
-        print('File %s has been successfully applied to project %s' %
-              (history_file, project_id))
+        print(('File %s has been successfully applied to project %s' %
+              (history_file, project_id)))
 
 
 def create(project_file,
@@ -113,7 +114,7 @@ def create(project_file,
             sheets = [0]
             # TODO: new format for sheets option introduced in OpenRefine 2.8
     # execute
-    kwargs = {k: v for k, v in vars().items() if v is not None}
+    kwargs = {k: v for k, v in list(vars().items()) if v is not None}
     project = refine.Refine(refine.RefineServer()).new_project(
         guess_cell_value_types=guessCellValueTypes,
         ignore_lines=ignoreLines,
@@ -127,8 +128,8 @@ def create(project_file,
         **kwargs)
     rows = project.do_json('get-rows')['total']
     if rows > 0:
-        print('{0}: {1}'.format('id', project.project_id))
-        print('{0}: {1}'.format('rows', rows))
+        print(('{0}: {1}'.format('id', project.project_id)))
+        print(('{0}: {1}'.format('rows', rows)))
         return project
     else:
         raise Exception(
@@ -144,7 +145,7 @@ def delete(project_id):
         raise Exception('Failed to delete %s: %s' %
                         (project_id, response))
     else:
-        print('Project %s has been successfully deleted' % project_id)
+        print(('Project %s has been successfully deleted' % project_id))
 
 
 def download(url, output_file=None):
@@ -152,14 +153,15 @@ def download(url, output_file=None):
     if not output_file:
         output_file = os.path.basename(url)
     if os.path.exists(output_file):
-        print('Error: File %s already exists.\n'
+        print(('Error: File %s already exists.\n'
               'Delete existing file or try command --output '
-              'to specify a different filename.' % output_file)
+              'to specify a different filename.' % output_file))
         return
-    # Workaround for SSL verification problems in one-file-executables
-    context = ssl._create_unverified_context()
-    urllib.urlretrieve(url, output_file, context=context)
-    print('Download to file %s complete' % output_file)
+
+    myfile = requests.get(url)
+    with open(output_file, 'wb') as fo:
+      fo.write(myfile.content)
+    print(('Download to file %s complete' % output_file))
 
 
 def export(project_id, encoding=None, output_file=None, export_format=None):
@@ -171,7 +173,7 @@ def export(project_id, encoding=None, output_file=None, export_format=None):
         if export_format in ['csv', 'tsv', 'txt']:
                 encoding = 'UTF-8'
         sys.stdout.write(project.export(
-            export_format=export_format, encoding=encoding).read())
+            export_format=export_format, encoding=encoding).text)
     else:
         ext = os.path.splitext(output_file)[1][1:]
         if ext:
@@ -180,34 +182,33 @@ def export(project_id, encoding=None, output_file=None, export_format=None):
             encoding = 'UTF-8'
         with open(output_file, 'wb') as f:
             f.write(project.export(
-                export_format=export_format, encoding=encoding).read())
-        print('Export to file %s complete' % output_file)
-
+                export_format=export_format, encoding=encoding).content)
+        print(('Export to file %s complete' % output_file))
 
 def info(project_id):
     """Show project metadata"""
     projects = refine.Refine(refine.RefineServer()).list_projects()
-    if project_id in projects.keys():
-        print('{0:>20}: {1}'.format('id', project_id))
-        print('{0:>20}: {1}'.format('url', 'http://' +
+    if project_id in list(projects.keys()):
+        print(('{0:>20}: {1}'.format('id', project_id)))
+        print(('{0:>20}: {1}'.format('url', 'http://' +
                                     refine.REFINE_HOST + ':' +
                                     refine.REFINE_PORT +
-                                    '/project?project=' + project_id))
-        for k, v in projects[project_id].items():
+                                    '/project?project=' + project_id)))
+        for k, v in list(projects[project_id].items()):
             if v:
-                    print(u'{0:>20}: {1}'.format(k, v))
+                    print(('{0:>20}: {1}'.format(k, v)))
         project_model = refine.RefineProject(project_id).get_models()
         columns = [c['name'] for c in project_model['columnModel']['columns']]
         for (i, v) in enumerate(columns, start=1):
-            print(u'{0:>20}: {1}'.format(u'column ' + str(i).zfill(3), v))
+            print(('{0:>20}: {1}'.format('column ' + str(i).zfill(3), v)))
     else:
-        print('Error: No project found with id %s.\n'
-              'Check existing projects with command --list' % (project_id))
+        print(('Error: No project found with id %s.\n'
+              'Check existing projects with command --list' % (project_id)))
 
 
 def ls():
     """Query the server and list projects sorted by mtime."""
-    projects = refine.Refine(refine.RefineServer()).list_projects().items()
+    projects = list(refine.Refine(refine.RefineServer()).list_projects().items())
 
     def date_to_epoch(json_dt):
         """Convert a JSON date time into seconds-since-epoch."""
@@ -215,7 +216,7 @@ def ls():
     projects.sort(key=lambda v: date_to_epoch(v[1]['modified']), reverse=True)
     if projects:
         for project_id, project_info in projects:
-            print(u'{0:>14}: {1}'.format(project_id, project_info['name']))
+            print(('{0:>14}: {1}'.format(project_id, project_info['name'])))
     else:
         print('Error: No projects found')
 
@@ -267,11 +268,11 @@ def templating(project_id,
         # normal output
         if not output_file:
             sys.stdout.write(project.export_templating(
-                             **templateconfig).read())
+                             **templateconfig).text)
         else:
             with open(output_file, 'wb') as f:
-                f.write(project.export_templating(**templateconfig).read())
-            print('Export to file %s complete' % output_file)
+                f.write(project.export_templating(**templateconfig).content)
+            print(('Export to file %s complete' % output_file))
     else:
         # splitToFiles functionality
         prefix = templateconfig['prefix']
@@ -294,7 +295,7 @@ def templating(project_id,
                                   'rowSeparator': '\n',
                                   'encoding': encoding}
             ids = [line.rstrip('\n') for line in project.export_templating(
-                   **ids_templateconfig) if line.rstrip('\n')]
+                   **ids_templateconfig).text if line.rstrip('\n')]
         # generate common config
         if mode == 'record-based':
             # record-based: split-character into template
@@ -316,19 +317,19 @@ def templating(project_id,
                                    'rowSeparator': ''})
         # execute
         records = project.export_templating(
-            **templateconfig).read().split(split)
+            **templateconfig).text.split(split)
         del records[0]  # skip first blank entry
         if suffixById:
             for index, record in enumerate(records):
                 output_file = base + '_' + ids[index] + '.' + ext
-                with open(output_file, 'wb') as f:
+                with open(output_file, 'w') as f:
                     f.writelines([prefix, record, suffix])
-            print('Export to files complete. Last file: %s' % output_file)
+            print(('Export to files complete. Last file: %s' % output_file))
         else:
             zeros = len(str(len(records)))
             for index, record in enumerate(records):
                 output_file = base + '_' + \
                     str(index + 1).zfill(zeros) + '.' + ext
-                with open(output_file, 'wb') as f:
+                with open(output_file, 'w') as f:
                     f.writelines([prefix, record, suffix])
-            print('Export to files complete. Last file: %s' % output_file)
+            print(('Export to files complete. Last file: %s' % output_file))

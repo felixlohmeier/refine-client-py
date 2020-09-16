@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#!/usr/bin/env python3
 """
 Script to provide a command line interface to a Refine server.
 """
@@ -210,14 +210,14 @@ def main():
 
     # get project_id
     if args and not str.isdigit(args[0]):
-        projects = refine.Refine(refine.RefineServer()).list_projects().items()
+        projects = list(refine.Refine(refine.RefineServer()).list_projects().items())
         idlist = []
         for project_id, project_info in projects:
-            if args[0].decode('UTF-8') == project_info['name']:
+            if args[0] == project_info['name']:
                 idlist.append(str(project_id))
         if len(idlist) > 1:
-            print('Error: Found %s projects with name %s.\n'
-                  'Please specify project by id.' % (len(idlist), args[0]))
+            print(('Error: Found %s projects with name %s.\n'
+                  'Please specify project by id.' % (len(idlist), args[0])))
             for i in idlist:
                 print('')
                 cli.info(i)
@@ -226,8 +226,8 @@ def main():
             try:
                 project_id = idlist[0]
             except IndexError:
-                print('Error: No project found with name %s.\n'
-                      'Try command --list' % args[0])
+                print(('Error: No project found with name %s.\n'
+                      'Try command --list' % args[0]))
                 return
     elif args:
         project_id = args[0]
@@ -240,11 +240,11 @@ def main():
     elif options.create:
         group5_dict = {group5_arg.dest: getattr(options, group5_arg.dest)
                        for group5_arg in group5.option_list}
-        kwargs = {k: v for k, v in group5_dict.items()
+        kwargs = {k: v for k, v in list(group5_dict.items())
                   if v is not None and v not in ['true', 'false']}
-        kwargs.update({k: True for k, v in group5_dict.items()
+        kwargs.update({k: True for k, v in list(group5_dict.items())
                        if v == 'true'})
-        kwargs.update({k: False for k, v in group5_dict.items()
+        kwargs.update({k: False for k, v in list(group5_dict.items())
                        if v == 'false'})
         if options.file_format:
             kwargs.update({'project_format': options.file_format})
@@ -259,11 +259,11 @@ def main():
     elif args and options.template:
         group6_dict = {group6_arg.dest: getattr(options, group6_arg.dest)
                        for group6_arg in group6.option_list}
-        kwargs = {k: v for k, v in group6_dict.items()
+        kwargs = {k: v for k, v in list(group6_dict.items())
                   if v is not None and v not in ['true', 'false']}
-        kwargs.update({k: True for k, v in group6_dict.items()
+        kwargs.update({k: True for k, v in list(group6_dict.items())
                        if v == 'true'})
-        kwargs.update({k: False for k, v in group6_dict.items()
+        kwargs.update({k: False for k, v in list(group6_dict.items())
                        if v == 'false'})
         cli.templating(project_id, options.template,
                        output_file=options.output, **kwargs)
